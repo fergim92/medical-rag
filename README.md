@@ -15,6 +15,25 @@ This system combines vector similarity search with Large Language Models to prov
 - **Medical Domain Optimization**: Configurable for biomedical embedding models
 - **Confidence Scoring**: Provides confidence scores based on retrieval quality
 
+## Project Structure
+
+```
+medical-rag/
+├── main.py                     # Entry point - run demo
+├── requirements.txt            # Dependencies
+├── medical_rag/
+│   ├── __init__.py            # Package exports
+│   ├── models.py              # Data classes (Document, SearchResult, RAGResponse)
+│   ├── embeddings.py          # Medical text embeddings
+│   ├── processor.py           # Document chunking
+│   ├── vector_store.py        # ChromaDB vector database
+│   ├── llm_client.py          # Multi-provider LLM client
+│   ├── rag.py                 # Main RAG orchestrator
+│   └── data/
+│       ├── __init__.py
+│       └── sample_docs.py     # Sample medical documents
+```
+
 ## Architecture
 
 ```
@@ -72,10 +91,17 @@ ollama pull llama3.1
 ```
 3. Initialize with Ollama provider:
 ```python
+from medical_rag import MedicalRAG
 rag = MedicalRAG(llm_provider="ollama")
 ```
 
 ## Usage
+
+### Running the Demo
+
+```bash
+python main.py
+```
 
 ### Basic Usage
 
@@ -103,40 +129,47 @@ print(f"Confidence: {response.confidence:.2%}")
 print(f"Sources: {[s.title for s in response.sources]}")
 ```
 
-### Running the Demo
+### Advanced Configuration
 
-```bash
-python medical_rag.py
+```python
+from medical_rag import MedicalRAG
+
+rag = MedicalRAG(
+    embedding_model="pritamdeka/S-PubMedBert-MS-MARCO",  # Medical-optimized
+    llm_provider="groq",
+    persist_dir="./my_vector_db"
+)
 ```
 
 ## Components
 
-| Component | Description |
-|-----------|-------------|
-| `MedicalEmbeddings` | Generates vector embeddings using sentence-transformers |
-| `DocumentProcessor` | Chunks documents with overlap for context preservation |
-| `VectorStore` | ChromaDB wrapper for similarity search |
-| `LLMClient` | Multi-provider LLM interface (Groq/Ollama) |
-| `MedicalRAG` | Main orchestrator combining all components |
+| Module | Class | Description |
+|--------|-------|-------------|
+| `models.py` | `Document` | Medical document with metadata |
+| `models.py` | `SearchResult` | Search result with relevance score |
+| `models.py` | `RAGResponse` | Structured response with citations |
+| `embeddings.py` | `MedicalEmbeddings` | Vector embeddings generator |
+| `processor.py` | `DocumentProcessor` | Smart document chunking |
+| `vector_store.py` | `VectorStore` | ChromaDB wrapper |
+| `llm_client.py` | `LLMClient` | Multi-provider LLM interface |
+| `rag.py` | `MedicalRAG` | Main orchestrator |
 
 ## Embedding Models
 
-- **Default**: `all-MiniLM-L6-v2` - Fast, general purpose
-- **Medical Domain**: `pritamdeka/S-PubMedBert-MS-MARCO` - Optimized for biomedical text
-
-```python
-rag = MedicalRAG(embedding_model="pritamdeka/S-PubMedBert-MS-MARCO")
-```
+| Model | Description |
+|-------|-------------|
+| `all-MiniLM-L6-v2` | Fast, general purpose (default) |
+| `pritamdeka/S-PubMedBert-MS-MARCO` | Optimized for biomedical text |
 
 ## Response Structure
 
 ```python
 @dataclass
 class RAGResponse:
-    answer: str           # Generated answer with citations
+    answer: str              # Generated answer with citations
     sources: List[Document]  # Retrieved source documents
-    confidence: float     # Confidence score (0-1)
-    query: str           # Original query
+    confidence: float        # Confidence score (0-1)
+    query: str              # Original query
 ```
 
 ## Safety Guidelines
